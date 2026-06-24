@@ -1,35 +1,51 @@
 # Testing Pattern
 
-## Current Gate
+## Current Gates
 
 Run:
 
 ```powershell
-./tools/ai-quality.ps1
+pnpm quality
+pnpm lint
+pnpm typecheck
+pnpm format
+pnpm test:coverage
+pnpm build
+pnpm audit:deps
+pnpm e2e
 ```
 
-This validates the AI-native baseline and scans for obvious leaked secrets.
+`pnpm quality` validates the AI-native baseline and scans for obvious leaked secrets. Package scripts protect the React/Vite application.
 
-## When JavaScript or TypeScript Is Added
+## Unit And Component Tests
 
-- Add Vitest unless the selected framework standardizes on Jest.
-- Add package scripts for `test`, `test:coverage`, `lint`, `typecheck`, `format`, and `build`.
-- Keep unit tests near behavior and avoid testing implementation details.
-- Add coverage thresholds only after meaningful tests exist.
+- Use Vitest.
 - Use React Testing Library for React components.
+- Keep unit tests near feature code under `src/`.
+- Test business behavior, validation, filtering, scoring, and error states.
+- Avoid snapshot-heavy tests and implementation-detail tests.
 
-## When Python Is Added
+## E2E Tests
+
+- Use Playwright.
+- Keep smoke tests under `e2e/`.
+- Cover app load, navigation, and the key market analysis path.
+- Add auth coverage when auth exists.
+- Keep desktop and mobile coverage.
+
+## Future Backend Tests
+
+When Python is added:
 
 - Add pytest.
 - Add coverage with `pytest-cov`.
 - Test validation, error handling, and side effects.
 
-## When Frontend Is Added
+When Node backend code is added:
 
-- Install Playwright.
-- Add smoke tests under `e2e/`.
-- Cover app load, navigation, auth flow when auth exists, the key user path, loading state, and one error path.
+- Add a mature test runner.
+- Test validation, API routes, auth flow, persistence, and retry-sensitive operations.
 
 ## First Business Module Gate
 
-The first real business module must add unit testing, lint, typecheck, formatter, coverage, and CI updates in the same change.
+The first real business module has added unit testing, lint, typecheck, formatter, coverage, build verification, dependency audit, CI updates, and Playwright smoke tests. Preserve these gates.

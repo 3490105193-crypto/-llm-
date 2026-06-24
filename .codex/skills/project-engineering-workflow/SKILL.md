@@ -23,15 +23,25 @@ Use this skill to keep Codex work aligned with the repository contract in `AGENT
 
 ## Current Stack Rules
 
-As of baseline creation, this repo has no application source code, frontend, backend, database, package manager, or runtime-specific test runner.
+This repo contains Market Lens, a frontend-only financial market analysis app.
 
-Do not install Playwright, Vitest, Jest, pytest, or dependency audit tooling until the corresponding runtime exists. When a runtime is introduced, update `AGENTS.md`, `docs/architecture/module-map.md`, `docs/architecture/dependencies.md`, and CI in the same change.
+Current stack:
+
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- zod
+- Vitest
+- React Testing Library
+- Playwright
+- pnpm
 
 Prefer simple, stable, mature, AI-friendly stack choices. Preferred options are Next.js, React, TypeScript, Tailwind, shadcn/ui, FastAPI or Node.js, PostgreSQL, Prisma or SQLAlchemy, Vitest or Jest, Playwright, pytest, zod, and pydantic when product requirements justify them.
 
 ## First Module Gate
 
-When introducing the first real business module, add unit tests, lint, typecheck, formatter, coverage, and CI updates in the same change. Do not expand business code with a promise to add tests later.
+The first real business module already includes unit tests, lint, typecheck, formatter, coverage, dependency audit, build verification, Playwright e2e, and CI updates. Preserve these gates when changing application code.
 
 ## Required Checks
 

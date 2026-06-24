@@ -4,18 +4,19 @@ This file is the operating contract for AI and human contributors working in thi
 
 ## Repository State
 
-As of 2026-06-24, this repository contains an AI-native engineering baseline and no application source code.
+As of 2026-06-24, this repository contains the Market Lens frontend application and an AI-native engineering workflow baseline.
 
 Detected stack:
 
-- Frontend: none detected.
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS.
 - Backend: none detected.
 - Database: none detected.
-- Package manager: none detected.
-- Test runner: none detected.
-- GitHub Actions: configured for repository quality checks.
+- Package manager: pnpm.
+- Runtime validation: zod.
+- Test runner: Vitest, React Testing Library, Playwright.
+- GitHub Actions: configured for quality, lint, typecheck, format, tests, build, audit, and e2e.
 
-Do not invent a frontend, backend, database, package manager, or deployment target unless the task explicitly requires application functionality.
+Do not invent a backend, database, auth system, broker integration, live market data provider, or deployment target unless the task explicitly requires it.
 
 ## Product Goal Gate
 
@@ -34,13 +35,15 @@ Do not code when the goal is unclear. Do not design complex architecture for gue
 Current architecture is a documentation-first baseline:
 
 - `AGENTS.md` defines contribution rules.
+- `src/features/market/` contains the market analysis domain model, seed data, analysis logic, and UI components.
+- `src/App.tsx` and `src/main.tsx` mount the React application.
 - `docs/repo-memory.md` is the primary durable repo memory.
 - `docs/module-map.md` is the primary module and boundary map.
 - `docs/architecture/` stores architecture details, risks, dependencies, and technical debt.
 - `docs/decisions/` stores architecture decision records.
 - `docs/patterns/` stores repeatable engineering patterns.
-- `tests/` is reserved for unit and integration tests once a runtime exists.
-- `e2e/` is reserved for Playwright tests once a frontend exists.
+- `tests/` is reserved for future cross-module tests.
+- `e2e/` contains Playwright smoke tests.
 - `.codex/skills/project-engineering-workflow/` stores the project-local Codex workflow skill.
 - `tools/ai-quality.ps1` validates the baseline structure and scans for obvious leaked secrets.
 
@@ -104,10 +107,10 @@ Do not expand business code with a promise to add tests later.
 
 ## Frontend Rules
 
-No frontend exists yet. When one is introduced:
+Frontend exists. All frontend changes must:
 
-- Install and configure Playwright.
-- Add smoke tests under `e2e/`.
+- Keep Playwright configured.
+- Add or update smoke tests under `e2e/`.
 - Test that the app loads, navigation works, auth flow works if auth exists, and the key user path works.
 - Use mobile-first layout.
 - Meet accessibility basics: semantic HTML, visible focus states, labels for inputs, keyboard navigation, and sufficient contrast.
@@ -137,8 +140,10 @@ Do not trust client state. Do not swallow failures silently. Do not use generic 
 
 Current state:
 
-- `tools/ai-quality.ps1` is the only runnable quality gate.
-- `tests/` and `e2e/` are placeholders because there is no application runtime.
+- `tools/ai-quality.ps1` validates repo baseline structure and scans for obvious secrets.
+- `pnpm test:coverage` runs Vitest and coverage.
+- `pnpm e2e` runs Playwright desktop and mobile smoke tests.
+- `pnpm lint`, `pnpm typecheck`, `pnpm format`, `pnpm build`, and `pnpm audit:deps` are required gates.
 
 Once application code exists, tests must continuously protect:
 
@@ -154,10 +159,8 @@ Avoid snapshot-heavy tests that do not assert behavior. Avoid fragile tests tied
 
 ## Dependency Audit
 
-When dependencies are introduced:
+Dependencies are introduced and audited with `pnpm audit --audit-level high`.
 
-- Enable the relevant audit command in CI.
-- Use `npm audit`, `pnpm audit`, `yarn npm audit`, `pip-audit`, or another documented project-approved scanner.
 - Treat critical and high vulnerabilities as priority work.
 - Avoid abandoned packages.
 - Reduce dependency count and prefer mature community packages.
@@ -176,7 +179,7 @@ When dependencies are introduced:
 
 ## CI/CD Rules
 
-Current CI runs the baseline quality gate. When application code exists, CI must include:
+Current CI includes:
 
 - Lint.
 - Typecheck.
@@ -184,7 +187,7 @@ Current CI runs the baseline quality gate. When application code exists, CI must
 - Coverage command.
 - Build verification.
 - Dependency audit.
-- Playwright e2e when a frontend exists.
+- Playwright e2e.
 
 Pull requests must not break tests, reduce meaningful coverage without explanation, or introduce obvious security risks.
 
@@ -244,4 +247,3 @@ Every PR or AI-authored change should include:
 - Prefer predictable patterns and deterministic workflows.
 - Update `docs/module-map.md`, `docs/repo-memory.md`, and ADRs when needed.
 - Make the repository easy for future AI agents to understand, modify, and evolve.
-

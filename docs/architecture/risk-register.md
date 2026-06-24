@@ -1,10 +1,9 @@
 # Risk Register
 
-| Risk | Severity | Status | Mitigation |
-| --- | --- | --- | --- |
-| No application stack exists | Medium | Open | Defer stack-specific tooling until requirements exist. |
-| Product goal is not defined yet | Medium | Open | Require goal, user scenarios, workflow, success metrics, and non-goals before implementation. |
-| Local PATH lacks common developer tools | Medium | Open | Use documented bundled tools or install Git/Node/Python explicitly. |
-| No executable app tests exist | Medium | Open | Add tests with the first application module. |
-| Security posture is policy-only | Medium | Open | Add dependency audits and input validation tests when code exists. |
-| Playwright is not installed | Low | Accepted | Install only when a frontend is introduced. |
+| Risk                                     | Severity | Status    | Mitigation                                                                                                              |
+| ---------------------------------------- | -------- | --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Market data is static sample data        | Medium   | Open      | Treat current data as demo input; add a real data adapter only after provider requirements are clear.                   |
+| No backend or persistence                | Low      | Accepted  | Current product works as local analysis workspace; add backend only for live data, saved state, auth, or collaboration. |
+| Local PATH lacks common developer tools  | Medium   | Open      | Use documented bundled tools or install Git/Node/Python explicitly.                                                     |
+| Playwright CDN download was slow locally | Low      | Mitigated | Local config uses installed Chrome on Windows; CI installs Playwright Chromium.                                         |
+| No auth exists                           | Low      | Accepted  | Auth is out of scope until user-specific workflows exist.                                                               |

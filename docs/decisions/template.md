@@ -25,4 +25,3 @@ Explain what the decision optimizes for and what it gives up.
 ## Consequences
 
 Describe the follow-up work, risks, migration concerns, and long-term implications.
-

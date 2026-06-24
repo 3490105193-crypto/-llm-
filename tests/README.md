@@ -1,14 +1,16 @@
 # Tests
 
-This directory is reserved for unit and integration tests.
+This directory is reserved for cross-module unit and integration tests.
 
-No test runner is configured because no application runtime exists yet.
+The frontend unit test runner is Vitest. Feature-local unit tests currently live next to the source under `src/`.
 
-When application code is added:
+Run:
 
-- Choose the runner that matches the stack.
-- Add runnable scripts to the package or project config.
-- Add coverage once meaningful tests exist.
-- Keep tests focused on behavior and boundaries.
-- Cover core business logic, validation, utility functions, API routes, database behavior, and auth flow when those surfaces exist.
-- Avoid snapshot-heavy tests and fragile implementation-detail tests.
+```powershell
+pnpm test
+pnpm test:coverage
+```
+
+Add tests for core business logic, validation, utility functions, API routes, database behavior, and auth flow when those surfaces exist.
+
+Avoid snapshot-heavy tests and fragile implementation-detail tests.

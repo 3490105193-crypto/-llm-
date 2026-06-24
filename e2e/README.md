@@ -1,12 +1,13 @@
 # End-to-End Tests
 
-This directory is reserved for frontend end-to-end tests.
+This directory contains frontend end-to-end tests.
 
-Playwright is not installed because no frontend exists yet.
+Playwright is configured for desktop Chromium and a mobile viewport.
 
-When a frontend is added:
+Run:
 
-- Install Playwright.
-- Add browser smoke tests for the primary route.
-- Cover app load, navigation, auth flow when auth exists, the key user path, loading state, and error state.
-- Add e2e execution to CI.
+```powershell
+pnpm e2e
+```
+
+Smoke coverage includes app load, navigation, and the key market analysis path. Add auth coverage when auth exists.

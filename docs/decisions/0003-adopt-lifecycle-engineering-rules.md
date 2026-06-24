@@ -29,4 +29,3 @@ Persisting rules in repo documents makes future AI work more deterministic and r
 - Future changes must update repo memory and module maps when boundaries change.
 - The first business module must include lint, typecheck, formatter, tests, coverage, and CI updates.
 - Playwright and dependency audit tooling remain deferred until a matching runtime exists.
-

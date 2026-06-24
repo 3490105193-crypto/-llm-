@@ -2,22 +2,33 @@
 
 ## Application Dependencies
 
-None detected.
+| Dependency            | Purpose                                      |
+| --------------------- | -------------------------------------------- |
+| `react` / `react-dom` | Frontend UI runtime                          |
+| `vite`                | Frontend dev server and production build     |
+| `typescript`          | Static typing                                |
+| `tailwindcss`         | Styling system                               |
+| `zod`                 | Runtime validation for market snapshot input |
+| `lucide-react`        | UI icons                                     |
+| `clsx`                | Conditional class composition                |
 
 ## Tooling Dependencies
 
-| Tool | Current Use | Required Now |
-| --- | --- | --- |
-| PowerShell / `pwsh` | Runs `tools/ai-quality.ps1` locally and in CI | Yes |
-| GitHub Actions | Runs baseline quality gate | Optional until repository is hosted |
-| Codex project skill | Provides project workflow guidance | Optional but recommended |
-| Playwright | Future frontend e2e testing | No |
-| Vitest or Jest | Future JavaScript or TypeScript unit testing | No |
-| pytest | Future Python unit testing | No |
+| Tool                  | Current Use                                   | Required Now |
+| --------------------- | --------------------------------------------- | ------------ |
+| pnpm                  | Package manager and script runner             | Yes          |
+| PowerShell / `pwsh`   | Runs `tools/ai-quality.ps1` locally and in CI | Yes          |
+| GitHub Actions        | Runs quality, tests, build, audit, and e2e    | Yes          |
+| Codex project skill   | Provides project workflow guidance            | Recommended  |
+| Vitest                | Unit and component tests                      | Yes          |
+| React Testing Library | Component behavior tests                      | Yes          |
+| Playwright            | Desktop and mobile e2e smoke tests            | Yes          |
+| Prettier              | Formatting gate                               | Yes          |
+| ESLint                | Lint gate                                     | Yes          |
 
 ## Dependency Rules
 
-- Add dependencies only after the runtime or framework is selected.
+- Add dependencies only when product requirements justify them.
 - Prefer one package manager per language ecosystem.
 - Commit lockfiles once a package manager exists.
 - Add dependency audit commands to CI in the same change that introduces dependencies.
@@ -28,7 +39,7 @@ None detected.
 
 ## Preferred Stack Options
 
-These are preferred options for future product work, not current dependencies:
+These remain preferred options for future product work:
 
 - Frontend: Next.js, React, TypeScript, Tailwind, shadcn/ui.
 - Backend: FastAPI or Node.js.
@@ -36,3 +47,5 @@ These are preferred options for future product work, not current dependencies:
 - ORM: Prisma or SQLAlchemy.
 - Testing: Vitest or Jest, Playwright, pytest.
 - Validation: zod or pydantic.
+
+The current frontend uses React with Vite because the first product version is a frontend-only analytical workspace and does not need server-side framework capabilities.

@@ -2,16 +2,17 @@
 
 ## Current State
 
-This repository is an empty application workspace with an AI-native engineering baseline. No application runtime, package manager, frontend, backend, database, or deployment target has been selected.
+This repository contains Market Lens, a frontend-only financial market analysis workspace, plus an AI-native engineering baseline. The application uses React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
 
 ## Baseline Architecture
 
-The current architecture has four layers:
+The current architecture has five layers:
 
 1. Collaboration contract: `AGENTS.md`.
-2. Durable memory: `docs/repo-memory.md`, `docs/module-map.md`, `docs/architecture/`, `docs/decisions/`, and `docs/patterns/`.
-3. Automation: `tools/ai-quality.ps1` and `.github/workflows/ci.yml`.
-4. Test placeholders: `tests/` and `e2e/`.
+2. Frontend app: `src/main.tsx`, `src/App.tsx`, and `src/features/market/`.
+3. Durable memory: `docs/repo-memory.md`, `docs/module-map.md`, `docs/architecture/`, `docs/decisions/`, and `docs/patterns/`.
+4. Automation: `tools/ai-quality.ps1`, package scripts, and `.github/workflows/ci.yml`.
+5. Tests: Vitest tests under `src/` and Playwright tests under `e2e/`.
 
 ## Product Discovery Gate
 
@@ -19,21 +20,19 @@ Before implementation, clarify product goal, user scenarios, core business workf
 
 ## Non-Goals
 
-- Do not install Playwright until a frontend exists.
-- Do not install Vitest, Jest, pytest, or coverage tooling until application code exists.
-- Do not create a backend, database, or deployment target without product requirements.
+- Do not add backend, auth, persistence, broker integration, or live data feeds until requirements justify them.
+- Do not create a database or deployment target without product requirements.
 - Do not add framework boilerplate only to satisfy tooling checklists.
 
 ## Evolution Rules
 
-When application code is introduced:
+When application code changes:
 
 - Confirm the product goal and user workflow first.
-- Add unit testing, lint, typecheck, formatter, coverage, and CI updates with the first business module.
+- Keep lint, typecheck, formatter, coverage, build, audit, and e2e working.
 - Prefer simple, stable, mature, AI-friendly stack choices.
 - Update `docs/module-map.md` and `docs/repo-memory.md`.
-- Update `docs/architecture/module-map.md`.
-- Add an architecture decision record in `docs/decisions/`.
-- Add focused tests in `tests/` or `e2e/`.
-- Extend CI to run lint, typecheck, tests, and dependency audit for the selected stack.
-- Update `AGENTS.md` with stack-specific rules.
+- Update `docs/architecture/module-map.md` if mirrored module memory changes.
+- Add an architecture decision record in `docs/decisions/` for important decisions.
+- Add focused tests in `src/`, `tests/`, or `e2e/`.
+- Extend CI to run any new stack-specific checks.

@@ -21,6 +21,7 @@ temp/
 
 # JavaScript dependencies
 node_modules/
+*.tsbuildinfo
 
 # Python outputs
 __pycache__/
@@ -31,4 +32,3 @@ venv/
 # Playwright outputs
 playwright-report/
 test-results/
-

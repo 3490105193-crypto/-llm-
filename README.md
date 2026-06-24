@@ -1,17 +1,40 @@
-# AI-Native Project Baseline
+# Market Lens
 
-This repository is currently an empty application workspace with an AI-native engineering baseline.
+Market Lens is a financial market analysis workspace for scanning market regime, macro signals, asset opportunity, sector breadth, and scenario risk.
 
-The baseline defines:
+The application is local-data first. It uses a validated seed market snapshot so the product can run without API keys, broker credentials, or paid real-time market data.
 
-- Project collaboration rules in `AGENTS.md`
-- Primary repo memory in `docs/repo-memory.md`
-- Primary module map in `docs/module-map.md`
-- Architecture memory in `docs/architecture/`
-- Decision records in `docs/decisions/`
-- Implementation patterns in `docs/patterns/`
-- Test and e2e placeholders in `tests/` and `e2e/`
-- A lightweight quality gate in `tools/ai-quality.ps1`
-- A project-local Codex skill in `.codex/skills/project-engineering-workflow/`
+## Stack
 
-No frontend, backend, database, package manager, or application runtime has been selected yet. Add those only when product goals, user scenarios, core workflow, success metrics, and non-goals are clear. The first business module must include tests, lint, typecheck, formatter, coverage, and CI updates.
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- zod
+- Vitest and React Testing Library
+- Playwright
+- pnpm
+
+## Scripts
+
+```powershell
+pnpm dev
+pnpm lint
+pnpm typecheck
+pnpm format
+pnpm test:coverage
+pnpm build
+pnpm audit:deps
+pnpm e2e
+pnpm quality
+```
+
+## AI-Native Workflow
+
+- Project collaboration rules live in `AGENTS.md`.
+- Repo memory lives in `docs/repo-memory.md`.
+- Module boundaries live in `docs/module-map.md`.
+- Architecture details live in `docs/architecture/`.
+- Decision records live in `docs/decisions/`.
+- Implementation patterns live in `docs/patterns/`.
+- The project-local Codex skill lives in `.codex/skills/project-engineering-workflow/`.
