@@ -13,9 +13,10 @@ This validates the AI-native baseline and scans for obvious leaked secrets.
 ## When JavaScript or TypeScript Is Added
 
 - Add Vitest unless the selected framework standardizes on Jest.
-- Add package scripts for `test`, `test:coverage`, `lint`, and `typecheck`.
+- Add package scripts for `test`, `test:coverage`, `lint`, `typecheck`, `format`, and `build`.
 - Keep unit tests near behavior and avoid testing implementation details.
 - Add coverage thresholds only after meaningful tests exist.
+- Use React Testing Library for React components.
 
 ## When Python Is Added
 
@@ -27,5 +28,8 @@ This validates the AI-native baseline and scans for obvious leaked secrets.
 
 - Install Playwright.
 - Add smoke tests under `e2e/`.
-- Cover the primary route, loading state, and one error path.
+- Cover app load, navigation, auth flow when auth exists, the key user path, loading state, and one error path.
 
+## First Business Module Gate
+
+The first real business module must add unit testing, lint, typecheck, formatter, coverage, and CI updates in the same change.

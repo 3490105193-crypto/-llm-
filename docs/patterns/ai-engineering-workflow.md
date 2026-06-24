@@ -3,12 +3,13 @@
 Use this workflow for every non-trivial change:
 
 1. Read `AGENTS.md`.
-2. Inspect the current file tree and relevant docs.
-3. State the current architecture, risks, and plan.
-4. Make the smallest coherent change.
-5. Update repo memory and decision records when boundaries change.
-6. Run available validation.
-7. Summarize changes, risks, and next steps.
+2. Clarify product goal, user scenarios, core workflow, success metrics, and non-goals before implementation.
+3. Inspect the current file tree and relevant docs.
+4. State the current architecture, risks, and plan.
+5. Make the smallest coherent change.
+6. Update repo memory and decision records when boundaries change.
+7. Run available validation.
+8. Summarize changes, risks, and next steps.
 
 ## Change Size
 
@@ -24,3 +25,7 @@ Update `docs/architecture/repo-memory.md` when:
 - A security or deployment workflow changes.
 - A known constraint is removed.
 
+Also update the primary memory files:
+
+- `docs/repo-memory.md`
+- `docs/module-map.md`

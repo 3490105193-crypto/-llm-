@@ -22,4 +22,17 @@ None detected.
 - Commit lockfiles once a package manager exists.
 - Add dependency audit commands to CI in the same change that introduces dependencies.
 - Document why a major framework or runtime is selected in `docs/decisions/`.
+- Prefer simple, stable, mature, AI-friendly packages.
+- Avoid abandoned packages and unnecessary dependencies.
+- Treat critical and high vulnerabilities as priority work.
 
+## Preferred Stack Options
+
+These are preferred options for future product work, not current dependencies:
+
+- Frontend: Next.js, React, TypeScript, Tailwind, shadcn/ui.
+- Backend: FastAPI or Node.js.
+- Database: PostgreSQL.
+- ORM: Prisma or SQLAlchemy.
+- Testing: Vitest or Jest, Playwright, pytest.
+- Validation: zod or pydantic.

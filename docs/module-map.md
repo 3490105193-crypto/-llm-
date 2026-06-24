@@ -1,7 +1,5 @@
 # Module Map
 
-Primary module mapping lives at `docs/module-map.md`. Keep this file synchronized with that path when modules or service boundaries change.
-
 ## Current Modules
 
 | Path | Purpose | Owner Boundary |
@@ -10,13 +8,39 @@ Primary module mapping lives at `docs/module-map.md`. Keep this file synchronize
 | `docs/repo-memory.md` | Primary durable repo memory | Architecture |
 | `docs/module-map.md` | Primary module map and boundaries | Architecture |
 | `.codex/skills/project-engineering-workflow/` | Project-local Codex workflow skill | AI workflow |
-| `docs/architecture/` | Durable architecture memory | Architecture |
+| `docs/architecture/` | Architecture details, risks, dependencies, and technical debt | Architecture |
 | `docs/decisions/` | Architecture decision records | Architecture |
 | `docs/patterns/` | Reusable engineering patterns | Engineering workflow |
 | `tools/ai-quality.ps1` | Lightweight validation and secret scan | Engineering workflow |
 | `tests/` | Future unit and integration tests | Application tests |
 | `e2e/` | Future frontend e2e tests | Application tests |
 | `.github/workflows/ci.yml` | CI quality gate | Automation |
+
+## Data Flow
+
+No application data flow exists yet.
+
+When data flow is introduced, document:
+
+- Source.
+- Validation boundary.
+- Transformation.
+- Persistence.
+- External integrations.
+- Security constraints.
+
+## Service Boundaries
+
+No service boundaries exist yet.
+
+When a service boundary is introduced, document:
+
+- Interface.
+- Owned data.
+- Side effects.
+- Retry and idempotency behavior.
+- Auth and authorization assumptions.
+- Tests that protect the boundary.
 
 ## Pending Modules
 
@@ -30,3 +54,4 @@ When a module is added, record:
 - Owned data or side effects.
 - Tests that protect it.
 - Security boundaries.
+

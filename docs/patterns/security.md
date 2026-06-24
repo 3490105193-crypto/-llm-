@@ -14,6 +14,8 @@ When code is added, audit:
 - Dependency vulnerabilities.
 - Error responses and stack trace exposure.
 - Retry safety for writes and external calls.
+- Injection risks.
+- Least privilege assumptions.
 
 ## Dependency Audit Commands
 
@@ -26,3 +28,4 @@ Add the appropriate command with the selected stack:
 
 Document the chosen command in CI.
 
+Critical and high vulnerabilities are priority work. Do not ignore them long term.

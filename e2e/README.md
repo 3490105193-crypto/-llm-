@@ -8,6 +8,5 @@ When a frontend is added:
 
 - Install Playwright.
 - Add browser smoke tests for the primary route.
-- Cover loading and error states for the first meaningful flow.
+- Cover app load, navigation, auth flow when auth exists, the key user path, loading state, and error state.
 - Add e2e execution to CI.
-

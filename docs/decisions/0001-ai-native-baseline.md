@@ -22,9 +22,17 @@ Create an AI-native baseline before selecting an application stack. The baseline
 - A lightweight quality gate
 - A project-local Codex skill
 
+## Alternatives
+
+- Start with a full application framework immediately.
+- Keep the repository empty until product requirements are clearer.
+
+## Tradeoffs
+
+The baseline improves future AI collaboration and avoids premature stack lock-in. It does not provide application behavior or runtime-specific tests yet.
+
 ## Consequences
 
 - Future agents can understand the project before code exists.
 - The repository avoids unnecessary framework boilerplate.
 - Stack-specific quality tools must be added later with the first real application module.
-
