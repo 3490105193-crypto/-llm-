@@ -230,7 +230,7 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <section className="grid min-w-0 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <AssetTable
             assets={rankedAssets}
             query={query}
@@ -241,7 +241,7 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
 
           <section
             aria-labelledby="asset-detail-title"
-            className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
+            className="min-w-0 rounded-lg border border-line bg-white p-4 shadow-dashboard"
           >
             {selectedAsset ? (
               <>

@@ -23,7 +23,7 @@ export function AssetTable({
     <section
       id="watchlist"
       aria-labelledby="asset-table-title"
-      className="rounded-lg border border-line bg-white shadow-dashboard"
+      className="min-w-0 overflow-hidden rounded-lg border border-line bg-white shadow-dashboard"
     >
       <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -48,7 +48,7 @@ export function AssetTable({
         </label>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="w-full overflow-x-auto">
         <table className="min-w-[760px] w-full border-collapse text-left text-sm">
           <thead className="bg-paper text-xs uppercase text-slate-500">
             <tr>
