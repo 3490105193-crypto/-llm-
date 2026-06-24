@@ -12,6 +12,8 @@ describe("MarketDashboard", () => {
     expect(
       screen.getByRole("heading", { name: /institutional market cockpit/i })
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /dsa live llm cockpit/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /run dsa live market review/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /breadth map/i })).toBeInTheDocument();
   });
 

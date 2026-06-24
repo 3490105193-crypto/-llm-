@@ -142,6 +142,7 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
   const researchSummary = snapshot ? summarizeResearchQueue(snapshot.researchQueue) : null;
   const activeLlmBrief = liveBrief ?? snapshot?.llmBrief;
   const llmSummary = activeLlmBrief ? summarizeLlmBrief(activeLlmBrief) : null;
+  const isLiveRunning = isLiveBriefRunning(liveBriefState);
   const assetContext =
     snapshot && selectedAsset
       ? getAssetResearchContext(snapshot, selectedAsset.symbol)
@@ -282,9 +283,19 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
                   {snapshot.regime.summary}
                 </p>
               </div>
-              <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[460px]">
+              <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[760px] xl:grid-cols-5">
                 <HeaderPill label="Universe" value={`${snapshot.assets.length} assets`} />
                 <HeaderPill label="Benchmark" value={snapshot.portfolio.benchmark} />
+                <HeaderPill label="LLM source" value={getLiveSourceLabel(liveBriefState)} />
+                <button
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-ocean px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+                  type="button"
+                  disabled={isLiveRunning}
+                  onClick={runLiveLlmBrief}
+                >
+                  <BrainCircuit aria-hidden="true" size={18} />
+                  {isLiveRunning ? "DSA running" : "Run DSA live"}
+                </button>
                 <button
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
                   type="button"
@@ -304,6 +315,13 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
 
           {activeWorkspace === "overview" ? (
             <>
+              <LiveLlmCommandCenter
+                brief={displayedLlmBrief}
+                liveState={liveBriefState}
+                onRunLive={runLiveLlmBrief}
+                onOpenAiBrief={() => setActiveWorkspace("ai-brief")}
+              />
+
               <section
                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                 aria-label="Market metrics"
@@ -571,6 +589,26 @@ function delay(ms: number): Promise<void> {
   });
 }
 
+function isLiveBriefRunning(liveState: LiveBriefUiState): boolean {
+  return liveState.mode === "submitting" || liveState.mode === "running";
+}
+
+function getLiveSourceLabel(liveState: LiveBriefUiState): string {
+  if (liveState.mode === "live") {
+    return "Live DSA";
+  }
+
+  if (isLiveBriefRunning(liveState)) {
+    return `${liveState.progress ?? 0}% DSA`;
+  }
+
+  if (liveState.mode === "failed") {
+    return "DSA failed";
+  }
+
+  return "Sample";
+}
+
 function isTerminalLiveStatus(
   status: LiveBriefStatus
 ): status is Extract<LiveBriefStatus, { status: "failed" | "cancelled" | "cancel_requested" }> {
@@ -587,6 +625,89 @@ function HeaderPill({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
       <p className="mt-1 truncate text-sm font-semibold">{value}</p>
     </div>
+  );
+}
+
+function LiveLlmCommandCenter({
+  brief,
+  liveState,
+  onRunLive,
+  onOpenAiBrief
+}: {
+  brief: LlmMarketBrief;
+  liveState: LiveBriefUiState;
+  onRunLive: () => void;
+  onOpenAiBrief: () => void;
+}) {
+  const isRunning = isLiveBriefRunning(liveState);
+
+  return (
+    <section
+      className="rounded-lg border border-ocean/30 bg-white p-4 shadow-dashboard"
+      aria-labelledby="live-llm-title"
+    >
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="max-w-4xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold uppercase text-slate-500">daily_stock_analysis</p>
+            <span
+              className={clsx(
+                "rounded-full border px-2 py-1 text-xs font-semibold",
+                liveState.mode === "live"
+                  ? "border-mint/30 bg-mint/10 text-mint"
+                  : liveState.mode === "failed"
+                    ? "border-coral/30 bg-coral/10 text-coral"
+                    : isRunning
+                      ? "border-ocean/30 bg-ocean/10 text-ocean"
+                      : "border-amber/30 bg-amber/10 text-amber"
+              )}
+            >
+              {getLiveSourceLabel(liveState)}
+            </span>
+            {liveState.taskId ? (
+              <span className="rounded-full border border-line bg-paper px-2 py-1 text-xs font-semibold text-slate-500">
+                Task {liveState.taskId.slice(0, 8)}
+              </span>
+            ) : null}
+          </div>
+          <h2 id="live-llm-title" className="mt-2 text-xl font-semibold">
+            DSA live LLM cockpit
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{brief.marketView.summary}</p>
+          {liveState.error ? (
+            <p className="mt-3 rounded-md border border-coral/30 bg-coral/10 p-3 text-sm font-semibold text-coral">
+              {liveState.error}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[520px]">
+          <HeaderPill label="Engine" value={brief.engine} />
+          <HeaderPill label="Stance" value={brief.marketView.stance} />
+          <HeaderPill
+            label="Progress"
+            value={isRunning ? `${liveState.progress ?? 0}%` : `${brief.marketView.confidence}%`}
+          />
+          <button
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-ocean px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 sm:col-span-2"
+            type="button"
+            disabled={isRunning}
+            onClick={onRunLive}
+          >
+            <RefreshCw aria-hidden="true" className={isRunning ? "animate-spin" : ""} size={18} />
+            {isRunning ? "Running DSA review" : "Run DSA live market review"}
+          </button>
+          <button
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-line bg-paper px-4 py-2 text-sm font-semibold text-ink hover:bg-white"
+            type="button"
+            onClick={onOpenAiBrief}
+          >
+            <BrainCircuit aria-hidden="true" size={18} />
+            Open full brief
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
 

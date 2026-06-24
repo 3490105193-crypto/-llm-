@@ -52,7 +52,7 @@ export function AiBriefing({ brief, liveState, onRunLive }: AiBriefingProps) {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase text-slate-500">{brief.engine}</p>
-            <h2 className="mt-1 text-2xl font-semibold">LLM market briefing</h2>
+            <h2 className="mt-1 text-2xl font-semibold">DSA LLM market briefing</h2>
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
               {brief.marketView.summary}
             </p>
@@ -102,7 +102,7 @@ export function AiBriefing({ brief, liveState, onRunLive }: AiBriefingProps) {
               disabled={!onRunLive || isLoading}
             >
               <RefreshCw aria-hidden="true" className={isLoading ? "animate-spin" : ""} size={18} />
-              {isLoading ? "Running live LLM" : "Run live LLM"}
+              {isLoading ? "Running DSA review" : "Run DSA live market review"}
             </button>
           </div>
         </div>

@@ -32,7 +32,7 @@ test("risk and alert workflow works", async ({ page }) => {
   await page.goto("/");
 
   await page.getByRole("button", { name: "AI Brief" }).click();
-  await expect(page.getByRole("heading", { name: "LLM market briefing" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "DSA LLM market briefing" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Stock action board" })).toBeVisible();
 
   await page.getByRole("button", { name: "Scenarios" }).click();
