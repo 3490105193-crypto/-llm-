@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Engineering Workflow"
+  short_description: "Apply this repo's AI engineering workflow."
+  default_prompt: "Use $project-engineering-workflow to make a focused, tested change in this repository."
