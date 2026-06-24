@@ -36,7 +36,11 @@ export function ScenarioPanel({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2" role="tablist" aria-label="Market scenarios">
+      <div
+        className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"
+        role="tablist"
+        aria-label="Market scenarios"
+      >
         {scenarios.map((scenario) => (
           <button
             key={scenario.id}

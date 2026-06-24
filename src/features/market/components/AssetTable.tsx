@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import type { RankedAsset } from "../analysis";
-import { formatPct } from "../analysis";
+import { formatPct, formatUsdBn } from "../analysis";
 
 type AssetTableProps = {
   assets: RankedAsset[];
@@ -27,7 +27,7 @@ export function AssetTable({
     >
       <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase text-slate-500">Watchlist</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">Screener</p>
           <h2 id="asset-table-title" className="mt-2 text-xl font-semibold">
             Signal rank
           </h2>
@@ -49,20 +49,32 @@ export function AssetTable({
       </div>
 
       <div className="w-full overflow-x-auto">
-        <table className="min-w-[760px] w-full border-collapse text-left text-sm">
+        <table className="min-w-[1080px] w-full border-collapse text-left text-sm">
           <thead className="bg-paper text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3">Asset</th>
               <th className="px-4 py-3">Move</th>
               <th className="px-4 py-3">Signal</th>
               <th className="px-4 py-3">Risk-adj.</th>
+              <th className="px-4 py-3">Quality</th>
+              <th className="px-4 py-3">Revision</th>
+              <th className="px-4 py-3">Sentiment</th>
               <th className="px-4 py-3">Risk</th>
+              <th className="px-4 py-3">Cap</th>
+              <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Sector</th>
             </tr>
           </thead>
           <tbody>
             {assets.map((asset) => (
-              <tr key={asset.symbol} className="border-t border-line">
+              <tr
+                key={asset.symbol}
+                className={
+                  asset.symbol === selectedSymbol
+                    ? "border-t border-line bg-ocean/5"
+                    : "border-t border-line"
+                }
+              >
                 <td className="px-4 py-3">
                   <button
                     className="min-h-11 text-left"
@@ -93,7 +105,19 @@ export function AssetTable({
                 </td>
                 <td className="px-4 py-3 font-semibold">{asset.opportunityScore}</td>
                 <td className="px-4 py-3 font-semibold">{asset.riskAdjustedScore}</td>
+                <td className="px-4 py-3">{asset.quality}</td>
+                <td
+                  className={
+                    asset.earningsRevision >= 0 ? "px-4 py-3 text-mint" : "px-4 py-3 text-coral"
+                  }
+                >
+                  {asset.earningsRevision > 0 ? "+" : ""}
+                  {asset.earningsRevision}
+                </td>
+                <td className="px-4 py-3">{asset.sentiment}</td>
                 <td className="px-4 py-3">{asset.risk}</td>
+                <td className="px-4 py-3">{formatUsdBn(asset.marketCapUsdBn)}</td>
+                <td className="px-4 py-3">{asset.category}</td>
                 <td className="px-4 py-3">{asset.sector}</td>
               </tr>
             ))}

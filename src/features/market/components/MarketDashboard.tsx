@@ -1,26 +1,44 @@
 "use client";
 
+import { clsx } from "clsx";
 import {
   Activity,
   AlertTriangle,
   Bell,
+  BrainCircuit,
+  BriefcaseBusiness,
+  CalendarClock,
+  ClipboardList,
+  Gauge,
+  LayoutDashboard,
   LineChart,
   RefreshCw,
+  Search,
   ShieldAlert,
   SlidersHorizontal
 } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import {
+  buildScenarioImpacts,
   calculateMarketHealth,
+  calculatePortfolioRisk,
   choosePrimaryScenario,
   formatPct,
+  formatWeight,
+  getAssetResearchContext,
   rankAssets,
-  severityTone
+  severityTone,
+  summarizeLlmBrief,
+  summarizeResearchQueue
 } from "../analysis";
-import type { MarketAsset, MarketSnapshot } from "../schemas";
+import type { MarketAsset, MarketSnapshot, SavedView } from "../schemas";
+import { AlertCenter } from "./AlertCenter";
+import { AiBriefing } from "./AiBriefing";
+import { AssetDetail } from "./AssetDetail";
 import { AssetTable } from "./AssetTable";
 import { MarketPulseChart } from "./MarketPulseChart";
 import { MetricCard } from "./MetricCard";
+import { RiskLab } from "./RiskLab";
 import { ScenarioPanel } from "./ScenarioPanel";
 import { SectorHeatmap } from "./SectorHeatmap";
 
@@ -28,34 +46,101 @@ type MarketDashboardProps = {
   snapshot: MarketSnapshot | null;
 };
 
-const categories: Array<MarketAsset["category"] | "All"> = [
-  "All",
-  "Equity",
-  "ETF",
-  "Macro",
-  "Crypto"
-];
+type WorkspaceId = "overview" | "ai-brief" | "screener" | "portfolio" | "scenarios" | "alerts";
+
+const workspaceItems = [
+  { id: "overview", label: "Overview", Icon: LayoutDashboard },
+  { id: "ai-brief", label: "AI Brief", Icon: BrainCircuit },
+  { id: "screener", label: "Screener", Icon: Search },
+  { id: "portfolio", label: "Portfolio", Icon: BriefcaseBusiness },
+  { id: "scenarios", label: "Scenarios", Icon: Gauge },
+  { id: "alerts", label: "Alerts", Icon: Bell }
+] satisfies Array<{ id: WorkspaceId; label: string; Icon: typeof Activity }>;
 
 export function MarketDashboard({ snapshot }: MarketDashboardProps) {
+  const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceId>("overview");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<MarketAsset["category"] | "All">("All");
+  const [region, setRegion] = useState<MarketAsset["region"] | "All">("All");
+  const [sector, setSector] = useState("All");
+  const [minimumScore, setMinimumScore] = useState(35);
+  const [maximumRisk, setMaximumRisk] = useState(85);
+  const [minimumQuality, setMinimumQuality] = useState(30);
   const [selectedSymbol, setSelectedSymbol] = useState(snapshot?.assets[0]?.symbol ?? "");
   const [activeScenarioId, setActiveScenarioId] = useState(
     snapshot ? choosePrimaryScenario(snapshot.scenarios).id : ""
   );
   const [isRefreshing, startRefresh] = useTransition();
 
+  const categories = useMemo<Array<MarketAsset["category"] | "All">>(() => {
+    if (!snapshot) {
+      return ["All"];
+    }
+
+    return ["All", ...Array.from(new Set(snapshot.assets.map((asset) => asset.category)))];
+  }, [snapshot]);
+
+  const regions = useMemo<Array<MarketAsset["region"] | "All">>(() => {
+    if (!snapshot) {
+      return ["All"];
+    }
+
+    return ["All", ...Array.from(new Set(snapshot.assets.map((asset) => asset.region)))];
+  }, [snapshot]);
+
+  const sectors = useMemo(() => {
+    if (!snapshot) {
+      return ["All"];
+    }
+
+    return ["All", ...Array.from(new Set(snapshot.assets.map((asset) => asset.sector)))];
+  }, [snapshot]);
+
   const rankedAssets = useMemo(() => {
     if (!snapshot) {
       return [];
     }
 
-    return rankAssets(snapshot, { query, category });
-  }, [category, query, snapshot]);
+    return rankAssets(snapshot, {
+      query,
+      category,
+      region,
+      sector,
+      minimumScore,
+      maximumRisk,
+      minimumQuality
+    });
+  }, [category, maximumRisk, minimumQuality, minimumScore, query, region, sector, snapshot]);
 
   const selectedAsset =
     rankedAssets.find((asset) => asset.symbol === selectedSymbol) ?? rankedAssets[0];
   const marketHealth = snapshot ? calculateMarketHealth(snapshot) : 0;
+  const portfolioSummary = useMemo(
+    () => (snapshot ? calculatePortfolioRisk(snapshot) : null),
+    [snapshot]
+  );
+  const scenarioImpacts = useMemo(
+    () => (snapshot ? buildScenarioImpacts(snapshot) : []),
+    [snapshot]
+  );
+  const activeScenarioImpact =
+    scenarioImpacts.find((impact) => impact.scenario.id === activeScenarioId) ?? scenarioImpacts[0];
+  const researchSummary = snapshot ? summarizeResearchQueue(snapshot.researchQueue) : null;
+  const llmSummary = snapshot ? summarizeLlmBrief(snapshot.llmBrief) : null;
+  const assetContext =
+    snapshot && selectedAsset
+      ? getAssetResearchContext(snapshot, selectedAsset.symbol)
+      : { tasks: [], alerts: [], events: [] };
+
+  function applySavedView(view: SavedView) {
+    setCategory(view.category);
+    setMinimumScore(view.minimumScore);
+    setMaximumRisk(view.maximumRisk);
+    setMinimumQuality(view.minimumQuality);
+    setRegion("All");
+    setSector("All");
+    setQuery("");
+  }
 
   if (!snapshot) {
     return (
@@ -73,237 +158,515 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
   }
 
   return (
-    <main className="min-h-screen bg-paper px-4 py-4 text-ink sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">
-        <header className="rounded-lg border border-line bg-white p-4 shadow-dashboard">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase text-slate-500">Market Lens</p>
-              <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Market command center</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                {snapshot.regime.summary}
+    <main className="min-h-screen bg-paper text-ink">
+      <div className="mx-auto grid w-full max-w-[1500px] gap-4 px-4 py-4 lg:grid-cols-[230px_1fr] lg:px-6">
+        <aside
+          className="lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)]"
+          aria-label="Workspace navigation"
+        >
+          <div className="rounded-lg border border-line bg-white p-3 shadow-dashboard">
+            <div className="border-b border-line px-2 pb-3">
+              <p className="text-xs font-semibold uppercase text-slate-500">Market Lens Pro</p>
+              <h1 className="mt-1 text-xl font-semibold">Research workbench</h1>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Snapshot{" "}
+                {new Date(snapshot.asOf).toLocaleString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit"
+                })}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <a
-                className="rounded-md border border-line px-3 py-2 text-sm font-semibold"
-                href="#signals"
-              >
-                Signals
-              </a>
-              <a
-                className="rounded-md border border-line px-3 py-2 text-sm font-semibold"
-                href="#watchlist"
-              >
-                Watchlist
-              </a>
-              <a
-                className="rounded-md border border-line px-3 py-2 text-sm font-semibold"
-                href="#scenarios"
-              >
-                Scenarios
-              </a>
-              <button
-                className="inline-flex min-h-11 items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
-                type="button"
-                disabled={isRefreshing}
-                onClick={() => startRefresh(() => setQuery((current) => current))}
-              >
-                <RefreshCw
-                  aria-hidden="true"
-                  className={isRefreshing ? "animate-spin" : ""}
-                  size={18}
-                />
-                {isRefreshing ? "Refreshing" : "Refresh"}
-              </button>
-            </div>
-          </div>
-        </header>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Market metrics">
-          <MetricCard
-            label="Health"
-            value={`${marketHealth}/100`}
-            detail="Composite of regime, breadth, momentum, and average risk."
-            tone="positive"
-            icon={<Activity aria-hidden="true" size={20} />}
-          />
-          <MetricCard
-            label="Confidence"
-            value={`${snapshot.regime.confidence}%`}
-            detail={`Snapshot timestamp: ${new Date(snapshot.asOf).toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit"
-            })}`}
-            tone="neutral"
-            icon={<LineChart aria-hidden="true" size={20} />}
-          />
-          <MetricCard
-            label="Alerts"
-            value={`${snapshot.alerts.length}`}
-            detail={snapshot.alerts[0]?.detail ?? "No active alerts."}
-            tone={severityTone(snapshot.alerts[0]?.severity ?? "low")}
-            icon={<Bell aria-hidden="true" size={20} />}
-          />
-          <MetricCard
-            label="Risk control"
-            value={selectedAsset ? `${selectedAsset.risk}/100` : "N/A"}
-            detail={
-              selectedAsset
-                ? `${selectedAsset.symbol}: ${selectedAsset.watchFlags.join(", ")}`
-                : "No asset selected."
-            }
-            tone={selectedAsset && selectedAsset.risk > 65 ? "danger" : "warning"}
-            icon={<ShieldAlert aria-hidden="true" size={20} />}
-          />
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-          <MarketPulseChart snapshot={snapshot} />
-
-          <section
-            id="signals"
-            aria-labelledby="signals-title"
-            className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-500">Signals</p>
-                <h2 id="signals-title" className="mt-2 text-xl font-semibold">
-                  Macro stack
-                </h2>
-              </div>
-              <div className="grid h-10 w-10 place-items-center rounded-md border border-amber/30 bg-amber/10 text-amber">
-                <AlertTriangle aria-hidden="true" size={20} />
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              {snapshot.macroSignals.map((signal) => (
-                <article key={signal.label} className="rounded-md border border-line bg-paper p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-semibold">{signal.label}</h3>
-                    <span className="rounded-full border border-line bg-white px-2 py-1 text-xs font-semibold">
-                      {signal.value}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-5 text-slate-600">{signal.summary}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </section>
-
-        <section
-          className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
-          aria-labelledby="filter-title"
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-md border border-line bg-paper text-ink">
-                <SlidersHorizontal aria-hidden="true" size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase text-slate-500">Universe</p>
-                <h2 id="filter-title" className="text-lg font-semibold">
-                  {category}
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-5 gap-2" role="group" aria-label="Asset category">
-              {categories.map((item) => (
+            <nav
+              className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-col"
+              aria-label="Market workspaces"
+            >
+              {workspaceItems.map(({ id, label, Icon }) => (
                 <button
-                  key={item}
-                  className={
-                    item === category
-                      ? "min-h-11 rounded-md bg-ink px-3 py-2 text-sm font-semibold text-white"
-                      : "min-h-11 rounded-md border border-line bg-paper px-3 py-2 text-sm font-semibold"
-                  }
+                  key={id}
+                  className={clsx(
+                    "inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold",
+                    activeWorkspace === id
+                      ? "bg-ink text-white"
+                      : "border border-line bg-paper text-ink hover:bg-white"
+                  )}
                   type="button"
-                  onClick={() => setCategory(item)}
+                  aria-pressed={activeWorkspace === id}
+                  onClick={() => setActiveWorkspace(id)}
                 >
-                  {item}
+                  <Icon aria-hidden="true" size={18} />
+                  {label}
                 </button>
               ))}
-            </div>
+            </nav>
           </div>
-        </section>
+        </aside>
 
-        <section className="grid min-w-0 gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-          <AssetTable
-            assets={rankedAssets}
-            query={query}
-            selectedSymbol={selectedAsset?.symbol ?? selectedSymbol}
-            onQueryChange={setQuery}
-            onSelectAsset={setSelectedSymbol}
-          />
-
-          <section
-            aria-labelledby="asset-detail-title"
-            className="min-w-0 rounded-lg border border-line bg-white p-4 shadow-dashboard"
-          >
-            {selectedAsset ? (
-              <>
-                <p className="text-xs font-semibold uppercase text-slate-500">Selected asset</p>
-                <div className="mt-2 flex items-start justify-between gap-3">
-                  <div>
-                    <h2 id="asset-detail-title" className="text-2xl font-semibold">
-                      {selectedAsset.symbol}
-                    </h2>
-                    <p className="text-sm text-slate-600">{selectedAsset.name}</p>
-                  </div>
-                  <span
-                    className={
-                      selectedAsset.changePct >= 0
-                        ? "text-lg font-semibold text-mint"
-                        : "text-lg font-semibold text-coral"
-                    }
-                  >
-                    {formatPct(selectedAsset.changePct)}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-6 text-slate-600">{selectedAsset.thesis}</p>
-                <dl className="mt-5 grid grid-cols-3 gap-2 text-sm">
-                  <div className="rounded-md border border-line bg-paper p-3">
-                    <dt className="text-xs text-slate-500">Momentum</dt>
-                    <dd className="mt-1 font-semibold">{selectedAsset.momentum}</dd>
-                  </div>
-                  <div className="rounded-md border border-line bg-paper p-3">
-                    <dt className="text-xs text-slate-500">Quality</dt>
-                    <dd className="mt-1 font-semibold">{selectedAsset.quality}</dd>
-                  </div>
-                  <div className="rounded-md border border-line bg-paper p-3">
-                    <dt className="text-xs text-slate-500">Liquidity</dt>
-                    <dd className="mt-1 font-semibold">{selectedAsset.liquidity}</dd>
-                  </div>
-                </dl>
-                <div className="mt-5">
-                  <h3 className="text-sm font-semibold">Catalysts</h3>
-                  <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                    {selectedAsset.catalysts.map((catalyst) => (
-                      <li key={catalyst}>{catalyst}</li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            ) : (
-              <div role="status" className="text-sm text-slate-600">
-                No asset selected.
+        <div className="min-w-0 space-y-4">
+          <header className="rounded-lg border border-line bg-white p-4 shadow-dashboard">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500">
+                  {snapshot.regime.name}
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold sm:text-3xl">
+                  Institutional market cockpit
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  {snapshot.regime.summary}
+                </p>
               </div>
-            )}
-          </section>
-        </section>
+              <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[460px]">
+                <HeaderPill label="Universe" value={`${snapshot.assets.length} assets`} />
+                <HeaderPill label="Benchmark" value={snapshot.portfolio.benchmark} />
+                <button
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-70"
+                  type="button"
+                  disabled={isRefreshing}
+                  onClick={() => startRefresh(() => setQuery((current) => current))}
+                >
+                  <RefreshCw
+                    aria-hidden="true"
+                    className={isRefreshing ? "animate-spin" : ""}
+                    size={18}
+                  />
+                  {isRefreshing ? "Refreshing" : "Refresh"}
+                </button>
+              </div>
+            </div>
+          </header>
 
-        <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-          <SectorHeatmap snapshot={snapshot} />
-          <ScenarioPanel
-            scenarios={snapshot.scenarios}
-            activeScenarioId={activeScenarioId}
-            onSelectScenario={setActiveScenarioId}
-          />
-        </section>
+          {activeWorkspace === "overview" ? (
+            <>
+              <section
+                className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+                aria-label="Market metrics"
+              >
+                <MetricCard
+                  label="Health"
+                  value={`${marketHealth}/100`}
+                  detail="Composite of regime, breadth, momentum, risk, and confidence."
+                  tone="positive"
+                  icon={<Activity aria-hidden="true" size={20} />}
+                />
+                <MetricCard
+                  label="Portfolio risk"
+                  value={portfolioSummary ? `${portfolioSummary.weightedRisk}/100` : "N/A"}
+                  detail={
+                    portfolioSummary
+                      ? `Beta ${portfolioSummary.weightedBeta}; hedge ${formatWeight(
+                          portfolioSummary.hedgeWeight
+                        )}.`
+                      : "No portfolio data."
+                  }
+                  tone="warning"
+                  icon={<ShieldAlert aria-hidden="true" size={20} />}
+                />
+                <MetricCard
+                  label="Scenario P/L"
+                  value={activeScenarioImpact ? formatPct(activeScenarioImpact.totalImpact) : "N/A"}
+                  detail={activeScenarioImpact?.scenario.name ?? "No active scenario."}
+                  tone={
+                    activeScenarioImpact && activeScenarioImpact.totalImpact < 0
+                      ? "danger"
+                      : "positive"
+                  }
+                  icon={<LineChart aria-hidden="true" size={20} />}
+                />
+                <MetricCard
+                  label="Research open"
+                  value={`${researchSummary?.open ?? 0}`}
+                  detail={`${researchSummary?.highPriorityOpen ?? 0} high priority tasks need review.`}
+                  tone={(researchSummary?.highPriorityOpen ?? 0) > 0 ? "danger" : "neutral"}
+                  icon={<ClipboardList aria-hidden="true" size={20} />}
+                />
+              </section>
+
+              <section className="rounded-lg border border-line bg-white p-4 shadow-dashboard">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-500">LLM read</p>
+                    <h2 className="mt-1 text-xl font-semibold">AI market stance</h2>
+                    <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
+                      {snapshot.llmBrief.marketView.summary}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[420px]">
+                    <HeaderPill label="Stance" value={snapshot.llmBrief.marketView.stance} />
+                    <HeaderPill
+                      label="Confidence"
+                      value={`${snapshot.llmBrief.marketView.confidence}%`}
+                    />
+                    <HeaderPill
+                      label="Top action"
+                      value={llmSummary?.highestConviction?.symbol ?? "N/A"}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+                <MarketPulseChart snapshot={snapshot} />
+
+                <section
+                  id="signals"
+                  aria-labelledby="signals-title"
+                  className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">Signals</p>
+                      <h2 id="signals-title" className="mt-1 text-xl font-semibold">
+                        Macro stack
+                      </h2>
+                    </div>
+                    <div className="grid h-10 w-10 place-items-center rounded-md border border-amber/30 bg-amber/10 text-amber">
+                      <AlertTriangle aria-hidden="true" size={20} />
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {snapshot.macroSignals.map((signal) => (
+                      <article
+                        key={signal.label}
+                        className="rounded-md border border-line bg-paper p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="font-semibold">{signal.label}</h3>
+                          <span className="rounded-full border border-line bg-white px-2 py-1 text-xs font-semibold">
+                            {signal.value}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm leading-5 text-slate-600">{signal.summary}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              </section>
+
+              <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+                <SectorHeatmap snapshot={snapshot} />
+                <OverviewQueue snapshot={snapshot} />
+              </section>
+            </>
+          ) : null}
+
+          {activeWorkspace === "ai-brief" ? <AiBriefing brief={snapshot.llmBrief} /> : null}
+
+          {activeWorkspace === "screener" ? (
+            <>
+              <section
+                className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
+                aria-labelledby="filter-title"
+              >
+                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-md border border-line bg-paper text-ink">
+                      <SlidersHorizontal aria-hidden="true" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-slate-500">
+                        Universe controls
+                      </p>
+                      <h2 id="filter-title" className="text-lg font-semibold">
+                        {rankedAssets.length} matching assets
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[780px] xl:grid-cols-4">
+                    <SelectControl
+                      label="Category"
+                      value={category}
+                      onChange={setCategory}
+                      options={categories}
+                    />
+                    <SelectControl
+                      label="Region"
+                      value={region}
+                      onChange={setRegion}
+                      options={regions}
+                    />
+                    <SelectControl
+                      label="Sector"
+                      value={sector}
+                      onChange={setSector}
+                      options={sectors}
+                    />
+                    <label className="block text-sm">
+                      <span className="text-xs font-semibold uppercase text-slate-500">
+                        Min score
+                      </span>
+                      <input
+                        className="mt-2 w-full accent-ocean"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={minimumScore}
+                        onChange={(event) => setMinimumScore(Number(event.target.value))}
+                      />
+                      <span className="font-semibold">{minimumScore}</span>
+                    </label>
+                    <label className="block text-sm">
+                      <span className="text-xs font-semibold uppercase text-slate-500">
+                        Max risk
+                      </span>
+                      <input
+                        className="mt-2 w-full accent-ocean"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={maximumRisk}
+                        onChange={(event) => setMaximumRisk(Number(event.target.value))}
+                      />
+                      <span className="font-semibold">{maximumRisk}</span>
+                    </label>
+                    <label className="block text-sm">
+                      <span className="text-xs font-semibold uppercase text-slate-500">
+                        Min quality
+                      </span>
+                      <input
+                        className="mt-2 w-full accent-ocean"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={minimumQuality}
+                        onChange={(event) => setMinimumQuality(Number(event.target.value))}
+                      />
+                      <span className="font-semibold">{minimumQuality}</span>
+                    </label>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs font-semibold uppercase text-slate-500">Saved views</p>
+                      <div className="mt-2 flex gap-2 overflow-x-auto">
+                        {snapshot.savedViews.map((view) => (
+                          <button
+                            key={view.id}
+                            className="min-h-11 shrink-0 rounded-md border border-line bg-paper px-3 py-2 text-sm font-semibold hover:bg-white"
+                            type="button"
+                            onClick={() => applySavedView(view)}
+                          >
+                            {view.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid min-w-0 gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+                <AssetTable
+                  assets={rankedAssets}
+                  query={query}
+                  selectedSymbol={selectedAsset?.symbol ?? selectedSymbol}
+                  onQueryChange={setQuery}
+                  onSelectAsset={setSelectedSymbol}
+                />
+                <AssetDetail asset={selectedAsset} context={assetContext} />
+              </section>
+            </>
+          ) : null}
+
+          {activeWorkspace === "portfolio" && portfolioSummary ? (
+            <RiskLab
+              summary={portfolioSummary}
+              scenarioImpacts={scenarioImpacts}
+              activeScenarioId={activeScenarioId}
+              onSelectScenario={setActiveScenarioId}
+            />
+          ) : null}
+
+          {activeWorkspace === "scenarios" ? (
+            <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <ScenarioPanel
+                scenarios={snapshot.scenarios}
+                activeScenarioId={activeScenarioId}
+                onSelectScenario={setActiveScenarioId}
+              />
+              <ScenarioMatrix scenarioImpacts={scenarioImpacts} />
+            </section>
+          ) : null}
+
+          {activeWorkspace === "alerts" ? <AlertCenter snapshot={snapshot} /> : null}
+        </div>
       </div>
     </main>
+  );
+}
+
+function HeaderPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-line bg-paper px-3 py-2">
+      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function SelectControl<T extends string>({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: T;
+  options: T[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="text-xs font-semibold uppercase text-slate-500">{label}</span>
+      <select
+        className="mt-2 min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 font-semibold"
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function OverviewQueue({ snapshot }: { snapshot: MarketSnapshot }) {
+  const prioritizedAlerts = snapshot.alerts
+    .filter((alert) => !alert.acknowledged)
+    .sort((left, right) => {
+      const order = { high: 3, medium: 2, low: 1 };
+      return order[right.severity] - order[left.severity];
+    });
+
+  return (
+    <section
+      className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
+      aria-labelledby="queue-title"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase text-slate-500">Desk queue</p>
+          <h2 id="queue-title" className="mt-1 text-xl font-semibold">
+            Alerts and events
+          </h2>
+        </div>
+        <div className="grid h-10 w-10 place-items-center rounded-md border border-amber/30 bg-amber/10 text-amber">
+          <CalendarClock aria-hidden="true" size={20} />
+        </div>
+      </div>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div>
+          <h3 className="text-sm font-semibold">Open alerts</h3>
+          <div className="mt-3 space-y-2">
+            {prioritizedAlerts.slice(0, 3).map((alert) => (
+              <article key={alert.id} className="rounded-md border border-line bg-paper p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold">{alert.title}</h4>
+                  <span
+                    className={clsx(
+                      "rounded-full px-2 py-1 text-xs font-semibold",
+                      severityTone(alert.severity) === "danger"
+                        ? "bg-coral/10 text-coral"
+                        : "bg-amber/10 text-amber"
+                    )}
+                  >
+                    {alert.severity}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm leading-5 text-slate-600">{alert.suggestedAction}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold">Next events</h3>
+          <div className="mt-3 space-y-2">
+            {snapshot.events.slice(0, 4).map((event) => (
+              <article key={event.id} className="rounded-md border border-line bg-paper p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="font-semibold">{event.title}</h4>
+                  <time className="text-xs font-semibold text-slate-500" dateTime={event.date}>
+                    {event.date.slice(5)}
+                  </time>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">{event.symbols.join(", ")}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ScenarioMatrix({
+  scenarioImpacts
+}: {
+  scenarioImpacts: ReturnType<typeof buildScenarioImpacts>;
+}) {
+  return (
+    <section
+      className="rounded-lg border border-line bg-white p-4 shadow-dashboard"
+      aria-labelledby="matrix-title"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase text-slate-500">Portfolio stress</p>
+          <h2 id="matrix-title" className="mt-1 text-xl font-semibold">
+            Scenario matrix
+          </h2>
+        </div>
+        <div className="grid h-10 w-10 place-items-center rounded-md border border-ocean/30 bg-ocean/10 text-ocean">
+          <LineChart aria-hidden="true" size={20} />
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="min-w-[680px] w-full border-collapse text-left text-sm">
+          <thead className="bg-paper text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-3">Scenario</th>
+              <th className="px-3 py-3">Probability</th>
+              <th className="px-3 py-3">Portfolio impact</th>
+              <th className="px-3 py-3">Biggest drag</th>
+              <th className="px-3 py-3">Offset</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scenarioImpacts.map((impact) => (
+              <tr key={impact.scenario.id} className="border-t border-line">
+                <td className="px-3 py-3">
+                  <span className="block font-semibold">{impact.scenario.name}</span>
+                  <span className="block text-xs text-slate-500">{impact.scenario.horizon}</span>
+                </td>
+                <td className="px-3 py-3">{formatWeight(impact.scenario.probability)}</td>
+                <td
+                  className={
+                    impact.totalImpact >= 0
+                      ? "px-3 py-3 font-semibold text-mint"
+                      : "px-3 py-3 font-semibold text-coral"
+                  }
+                >
+                  {formatPct(impact.totalImpact)}
+                </td>
+                <td className="px-3 py-3">
+                  {impact.biggestDrag
+                    ? `${impact.biggestDrag.symbol} ${formatPct(impact.biggestDrag.contribution)}`
+                    : "N/A"}
+                </td>
+                <td className="px-3 py-3">
+                  {impact.biggestOffset
+                    ? `${impact.biggestOffset.symbol} ${formatPct(impact.biggestOffset.contribution)}`
+                    : "N/A"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

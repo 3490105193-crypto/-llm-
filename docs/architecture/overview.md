@@ -2,7 +2,9 @@
 
 ## Current State
 
-This repository contains Market Lens, a frontend-only financial market analysis workspace, plus an AI-native engineering baseline. The application uses React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
+This repository contains Market Lens Pro, a frontend-only financial market analysis workbench, plus an AI-native engineering baseline. The application uses React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
+
+The product is intentionally a mature front-end research workflow over validated sample data. It includes overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert center, research queue, and event calendar surfaces. It is not a live data terminal, broker, portfolio accounting system, or investment advice product.
 
 ## Baseline Architecture
 
@@ -23,6 +25,8 @@ Before implementation, clarify product goal, user scenarios, core business workf
 - Do not add backend, auth, persistence, broker integration, or live data feeds until requirements justify them.
 - Do not create a database or deployment target without product requirements.
 - Do not add framework boilerplate only to satisfy tooling checklists.
+- Do not present deterministic sample analytics as certified live market data, investment advice, or regulated risk output.
+- Do not run live LLM providers or paid market data directly from the browser. Add a server-side adapter first.
 
 ## Evolution Rules
 

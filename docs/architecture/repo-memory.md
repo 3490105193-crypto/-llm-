@@ -4,7 +4,9 @@ Primary repo memory lives at `docs/repo-memory.md`. Keep this file synchronized 
 
 ## Architecture Summary
 
-Market Lens is a frontend-only financial market analysis workspace built with React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
+Market Lens Pro is a frontend-only financial market analysis workbench built with React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
+
+The product currently supports overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert center, research queue, and event calendar workflows over a validated sample snapshot.
 
 Durable coordination files:
 
@@ -25,13 +27,17 @@ Durable coordination files:
 - Adopt documentation-first AI collaboration before application code.
 - Build Market Lens as a frontend-only React/Vite app because the first product version does not need backend or SSR capabilities.
 - Validate market input with zod before rendering or analysis.
+- Mature the product by deepening the frontend research workflow before adding backend, live data, auth, or persistence.
+- Add an LLM market brief contract inspired by `3490105193-crypto/daily_stock_analysis`; keep real LLM execution server-side.
 - Use Vitest, React Testing Library, and Playwright from the first business module.
 - Force Vite to patched `6.4.3` through pnpm override to keep dependency audit clean.
 - Use installed Chrome for local Playwright runs on Windows when browser CDN download is unavailable; CI installs Playwright Chromium.
 
 ## Known Constraints
 
-- Market data is static sample data and must not be treated as live or investment advice.
+- Market data is static validated sample data and must not be treated as live or investment advice.
+- Portfolio risk and scenario stress are deterministic front-end analytics over sample positions, not regulated risk certification or portfolio accounting.
+- LLM market brief data is a validated sample contract and does not expose API keys or perform live LLM calls in the browser.
 - No backend, persistence, auth, broker integration, or live market data adapter exists.
 - The repository is initialized on `main`.
 - The default shell PATH did not include Git, Node, npm, pnpm, yarn, or a usable Python runtime.
