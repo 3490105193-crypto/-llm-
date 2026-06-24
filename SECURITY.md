@@ -11,6 +11,7 @@ Report suspected vulnerabilities through the repository's private maintainer cha
 - Validate external input before use.
 - Avoid logging credentials, tokens, cookies, personal data, or raw request bodies.
 - Add dependency audits when a package manager is introduced.
+- Keep live LLM and market data credentials inside `daily_stock_analysis`; browser code should only call the local adapter.
 
 ## Local Check
 

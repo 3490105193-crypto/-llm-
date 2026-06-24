@@ -5,6 +5,7 @@ import {
   BrainCircuit,
   CheckCircle2,
   DatabaseZap,
+  RefreshCw,
   ShieldAlert,
   Sparkles,
   TrendingUp
@@ -14,6 +15,14 @@ import type { LlmDecision, LlmMarketBrief } from "../schemas";
 
 type AiBriefingProps = {
   brief: LlmMarketBrief;
+  liveState?: {
+    mode: "sample" | "submitting" | "running" | "live" | "failed";
+    taskId?: string;
+    progress?: number;
+    error?: string;
+    updatedAt?: string;
+  };
+  onRunLive?: () => void;
 };
 
 const decisionTone: Record<LlmDecision, string> = {
@@ -31,9 +40,11 @@ const severityClasses = {
   neutral: "border-line bg-white text-ink"
 };
 
-export function AiBriefing({ brief }: AiBriefingProps) {
+export function AiBriefing({ brief, liveState, onRunLive }: AiBriefingProps) {
   const summary = summarizeLlmBrief(brief);
   const decisions = rankLlmDecisions(brief.stockDecisions);
+  const isLoading = liveState?.mode === "submitting" || liveState?.mode === "running";
+  const statusLabel = getLiveStatusLabel(liveState);
 
   return (
     <section className="space-y-4" aria-label="AI market briefing">
@@ -45,12 +56,54 @@ export function AiBriefing({ brief }: AiBriefingProps) {
             <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
               {brief.marketView.summary}
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span
+                className={clsx(
+                  "rounded-full border px-2 py-1 text-xs font-semibold",
+                  liveState?.mode === "live"
+                    ? "border-mint/30 bg-mint/10 text-mint"
+                    : liveState?.mode === "failed"
+                      ? "border-coral/30 bg-coral/10 text-coral"
+                      : "border-amber/30 bg-amber/10 text-amber"
+                )}
+              >
+                {statusLabel}
+              </span>
+              {liveState?.taskId ? (
+                <span className="rounded-full border border-line bg-paper px-2 py-1 text-xs font-semibold text-slate-500">
+                  Task {liveState.taskId.slice(0, 8)}
+                </span>
+              ) : null}
+              {liveState?.updatedAt ? (
+                <span className="rounded-full border border-line bg-paper px-2 py-1 text-xs font-semibold text-slate-500">
+                  {new Date(liveState.updatedAt).toLocaleTimeString()}
+                </span>
+              ) : null}
+            </div>
+            {liveState?.error ? (
+              <p className="mt-3 rounded-md border border-coral/30 bg-coral/10 p-3 text-sm font-semibold text-coral">
+                {liveState.error}
+              </p>
+            ) : null}
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[520px]">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:min-w-[560px]">
             <Metric label="Stance" value={brief.marketView.stance} />
             <Metric label="Confidence" value={`${brief.marketView.confidence}%`} />
             <Metric label="Decisions" value={`${summary.totalDecisions}`} />
-            <Metric label="Risk actions" value={`${summary.riskActions}`} tone="danger" />
+            <Metric
+              label="Progress"
+              value={isLoading ? `${liveState?.progress ?? 0}%` : `${summary.riskActions} risks`}
+              tone={summary.riskActions > 0 ? "danger" : "neutral"}
+            />
+            <button
+              className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-70 sm:col-span-4"
+              type="button"
+              onClick={onRunLive}
+              disabled={!onRunLive || isLoading}
+            >
+              <RefreshCw aria-hidden="true" className={isLoading ? "animate-spin" : ""} size={18} />
+              {isLoading ? "Running live LLM" : "Run live LLM"}
+            </button>
           </div>
         </div>
       </div>
@@ -261,6 +314,26 @@ export function AiBriefing({ brief }: AiBriefingProps) {
       </div>
     </section>
   );
+}
+
+function getLiveStatusLabel(liveState: AiBriefingProps["liveState"]): string {
+  if (!liveState || liveState.mode === "sample") {
+    return "Sample brief";
+  }
+
+  if (liveState.mode === "submitting") {
+    return "Submitting to DSA";
+  }
+
+  if (liveState.mode === "running") {
+    return "DSA running";
+  }
+
+  if (liveState.mode === "live") {
+    return "Live DSA brief";
+  }
+
+  return "Live run failed";
 }
 
 function Metric({

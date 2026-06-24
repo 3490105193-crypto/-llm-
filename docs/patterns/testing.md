@@ -15,7 +15,7 @@ pnpm audit:deps
 pnpm e2e
 ```
 
-`pnpm quality` validates the AI-native baseline and scans for obvious leaked secrets. Package scripts protect the React/Vite application.
+`pnpm quality` validates the AI-native baseline and scans for obvious leaked secrets. Package scripts protect the React/Vite application. `server/live-llm-server.test.mjs` protects live DSA adapter mapping without requiring a running DSA service.
 
 ## Unit And Component Tests
 
@@ -24,6 +24,7 @@ pnpm e2e
 - Keep unit tests near feature code under `src/`.
 - Test business behavior, validation, filtering, scoring, and error states.
 - Avoid snapshot-heavy tests and implementation-detail tests.
+- For live adapter code, test task status normalization and payload mapping with fixtures instead of calling real LLM providers.
 
 ## E2E Tests
 
@@ -45,6 +46,8 @@ When Node backend code is added:
 
 - Add a mature test runner.
 - Test validation, API routes, auth flow, persistence, and retry-sensitive operations.
+
+The current local live adapter uses Vitest because it is small, dependency-light, and shares the existing JavaScript quality gate.
 
 ## First Business Module Gate
 

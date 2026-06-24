@@ -2,13 +2,16 @@
 
 ## Architecture Summary
 
-Market Lens Pro is a frontend-only financial market analysis workbench. It helps an investment research user scan market regime, review an LLM market brief, screen opportunities, inspect asset-level research context, review portfolio risk, stress scenarios, and triage alerts from a validated local market snapshot.
+Market Lens Pro is a financial market analysis workbench. It helps an investment research user scan market regime, review an LLM market brief, screen opportunities, inspect asset-level research context, review portfolio risk, stress scenarios, and triage alerts from a validated local market snapshot.
+
+The default app remains local-data first and can run without API keys. Optional live broad-market LLM review is available through a local Node.js adapter that calls `daily_stock_analysis` FastAPI. The adapter keeps LLM provider credentials and paid data keys out of the browser.
 
 Current layers:
 
 - Collaboration contract: `AGENTS.md`.
 - React app entry: `src/main.tsx` and `src/App.tsx`.
 - Market domain: `src/features/market/`.
+- Live LLM adapter: `server/live-llm-server.mjs`.
 - Repo memory: `docs/repo-memory.md`.
 - Module map: `docs/module-map.md`.
 - Architecture details: `docs/architecture/`.
@@ -25,6 +28,7 @@ Build a mature market analysis app that lets a research user judge risk regime, 
 
 - A researcher opens the workbench before market open and checks regime, alerts, events, and breadth.
 - A user reviews an LLM-driven market briefing with regime stance, index narrative, sector rotation, stock decisions, risk warnings, and data quality notes.
+- A user triggers a live DSA market-review task from AI Brief and waits for the adapter to return a validated live brief.
 - A user filters the screener by symbol, name, sector, category, region, score, quality, and risk.
 - A user selects an asset and reviews thesis, catalysts, factor profile, decision checklist, alerts, events, and research tasks.
 - A user checks portfolio exposure, beta, hedge weight, top positions, active share, and factor exposure.
@@ -37,6 +41,7 @@ Build a mature market analysis app that lets a research user judge risk regime, 
 2. Calculate market health, opportunity scores, risk-adjusted rankings, portfolio risk, scenario stress, LLM brief summary, alert priority, and research queue state.
 3. Present overview, AI brief, screener, asset memo, portfolio risk lab, scenarios, alert center, research queue, and event calendar.
 4. Let the user filter, navigate, select assets, inspect context, and compare stress outcomes without requiring external credentials.
+5. For live LLM, submit a DSA market-review task through the local adapter, poll DSA status, map markdown or structured payload into `LlmMarketBrief`, and render the returned brief.
 
 ## Success Metrics
 
@@ -45,13 +50,14 @@ Build a mature market analysis app that lets a research user judge risk regime, 
 - Unit tests cover ranking, filtering, health calculation, portfolio risk, scenario stress, alert prioritization, and error states.
 - Component tests cover workspace navigation, AI brief, screener filtering, risk lab, scenario matrix, alert center, and error state.
 - Playwright smoke tests cover app load, navigation, screener selection, scenario matrix, and alert/research workflow on desktop and mobile.
+- Live adapter tests cover DSA task status compatibility and mapping into the Market Lens brief contract.
 - CI runs lint, typecheck, format, tests, build, audit, and e2e.
 
 ## Non-Goals
 
 - No trading, order routing, broker integration, or investment advice.
-- No live market data, paid feeds, auth, user accounts, or backend persistence.
-- No live market data, paid feeds, auth, user accounts, backend persistence, order management, portfolio accounting, tax, or compliance surveillance workflow.
+- No direct browser access to live market data keys, paid feeds, or LLM provider credentials.
+- No auth, user accounts, backend persistence, order management, portfolio accounting, tax, or compliance surveillance workflow.
 
 ## Important Decisions
 
@@ -60,25 +66,28 @@ Build a mature market analysis app that lets a research user judge risk regime, 
 - Use a local seed market snapshot with zod validation until real data provider requirements are clear.
 - Mature the product by deepening the frontend research workflow first: screener, asset memo, risk lab, scenario matrix, alert center, research queue, and event calendar.
 - Add an LLM market brief contract inspired by `3490105193-crypto/daily_stock_analysis`; keep external LLM execution server-side for any real API keys or paid data.
+- Add a local server-side DSA adapter for live broad-market LLM review without exposing provider secrets to the browser.
 - Force Vite to patched `6.4.3` through pnpm override so dependency audit stays clean.
 - Use local Chrome for Playwright on Windows when Playwright browser download is unavailable; CI installs Playwright Chromium.
 
 ## Current Stack
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS.
+- Local adapter: Node.js built-in `http`.
 - Validation: zod.
 - Unit/component testing: Vitest and React Testing Library.
 - E2E: Playwright.
 - Package manager: pnpm.
-- Backend: none.
+- Backend: optional local DSA adapter only; no general API backend.
 - Database: none.
 
 ## Known Constraints
 
 - Market data is static validated sample data and must not be treated as live or investment advice.
-- No backend, persistence, auth, or external market data adapter exists.
+- No persistence, auth, broker integration, or production market data adapter exists.
 - Portfolio risk and scenario stress calculations are deterministic front-end analytics over sample positions; they are not portfolio accounting or risk-model certification.
-- LLM market brief data is a validated sample contract. It is not a live LLM call, and no API keys are exposed in the frontend.
+- AI Brief starts from a validated sample contract. A live DSA run can replace the visible brief when `daily_stock_analysis` and `pnpm dev:live-api` are running.
+- The live adapter maps partial DSA markdown or structured payloads with heuristics; richer DSA payload contracts would improve fidelity.
 - Local shell PATH originally lacked common developer tools; Codex desktop bundled Git, Node, Python, and pnpm were used for setup and validation.
 - Playwright browser download from CDN was slow locally; tests passed by using installed system Chrome.
 

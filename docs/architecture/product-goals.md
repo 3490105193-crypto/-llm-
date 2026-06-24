@@ -12,6 +12,7 @@ Market Lens Pro helps an investment research user evaluate market regime, find o
 - Portfolio risk review with exposure, active weight, beta, hedge weight, factor profile, and top positions.
 - Scenario stress testing with portfolio-level impact and position-level contribution.
 - LLM market briefing that summarizes regime stance, index narrative, sector rotation, stock decisions, risk warnings, and data quality.
+- Optional live broad-market LLM review through `daily_stock_analysis` when the local adapter and DSA FastAPI service are running.
 - Alert and research triage across risk, macro, event, and diligence queues.
 
 ## Core Business Workflow
@@ -20,6 +21,7 @@ Market Lens Pro helps an investment research user evaluate market regime, find o
 2. Calculate market health, asset ranking, portfolio risk, scenario impacts, LLM brief summary, alert priority, and research queue state.
 3. Render workspaces for overview, AI brief, screener, portfolio risk, scenarios, and alerts/research.
 4. Let the user filter, navigate, select assets, inspect research context, and compare stress outcomes without credentials.
+5. When live LLM is enabled, submit a DSA market-review task, poll until completion, validate the mapped brief, and render it in the AI Brief workspace.
 
 ## Success Metrics
 
@@ -28,12 +30,13 @@ Market Lens Pro helps an investment research user evaluate market regime, find o
 - Unit tests protect scoring, filtering, portfolio risk, scenario stress, and alert prioritization.
 - Component tests protect workspace navigation, AI brief, screener filtering, risk lab, alert center, and error state.
 - E2E tests protect app load, navigation, screener selection, scenario matrix, and alert/research workflow on desktop and mobile.
+- Live adapter tests protect DSA status compatibility and output mapping into the Market Lens brief contract.
 - Dependency audit has no high or critical findings.
 
 ## Non-Goals
 
 - No trading or broker connection.
 - No investment advice.
-- No live market data feed.
-- No auth, backend, persistence, or multi-tenant workflows.
+- No direct browser access to LLM provider keys or paid market data keys.
+- No general-purpose backend, auth, persistence, or multi-tenant workflows.
 - No portfolio accounting, order management, tax, compliance surveillance, or paid data licensing layer.

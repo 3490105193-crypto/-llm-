@@ -4,9 +4,9 @@ Primary repo memory lives at `docs/repo-memory.md`. Keep this file synchronized 
 
 ## Architecture Summary
 
-Market Lens Pro is a frontend-only financial market analysis workbench built with React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm.
+Market Lens Pro is a financial market analysis workbench built with React, TypeScript, Vite, Tailwind CSS, zod, Vitest, React Testing Library, Playwright, and pnpm. It includes an optional local Node.js adapter for live broad-market LLM review through `daily_stock_analysis`.
 
-The product currently supports overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert center, research queue, and event calendar workflows over a validated sample snapshot.
+The product currently supports overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert center, research queue, and event calendar workflows over a validated sample snapshot. When DSA and the adapter are running, AI Brief can replace the sample brief with a live DSA market-review result.
 
 Durable coordination files:
 
@@ -29,6 +29,7 @@ Durable coordination files:
 - Validate market input with zod before rendering or analysis.
 - Mature the product by deepening the frontend research workflow before adding backend, live data, auth, or persistence.
 - Add an LLM market brief contract inspired by `3490105193-crypto/daily_stock_analysis`; keep real LLM execution server-side.
+- Add a local server-side DSA adapter so live market-review tasks can run without exposing LLM provider keys in browser code.
 - Use Vitest, React Testing Library, and Playwright from the first business module.
 - Force Vite to patched `6.4.3` through pnpm override to keep dependency audit clean.
 - Use installed Chrome for local Playwright runs on Windows when browser CDN download is unavailable; CI installs Playwright Chromium.
@@ -37,8 +38,9 @@ Durable coordination files:
 
 - Market data is static validated sample data and must not be treated as live or investment advice.
 - Portfolio risk and scenario stress are deterministic front-end analytics over sample positions, not regulated risk certification or portfolio accounting.
-- LLM market brief data is a validated sample contract and does not expose API keys or perform live LLM calls in the browser.
-- No backend, persistence, auth, broker integration, or live market data adapter exists.
+- LLM market brief data starts as a validated sample contract and can be replaced by a live DSA result through the local adapter.
+- No persistence, auth, broker integration, general backend API, or production market data adapter exists.
+- The live DSA adapter maps partial markdown or structured payloads heuristically; a stronger DSA output contract would improve fidelity.
 - The repository is initialized on `main`.
 - The default shell PATH did not include Git, Node, npm, pnpm, yarn, or a usable Python runtime.
 - Codex desktop supplied bundled Git, Node, Python, and pnpm paths for setup and validation.

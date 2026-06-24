@@ -4,19 +4,19 @@ This file is the operating contract for AI and human contributors working in thi
 
 ## Repository State
 
-As of 2026-06-24, this repository contains the Market Lens frontend application and an AI-native engineering workflow baseline.
+As of 2026-06-25, this repository contains the Market Lens frontend application, an optional local live LLM adapter for `daily_stock_analysis`, and an AI-native engineering workflow baseline.
 
 Detected stack:
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS.
-- Backend: none detected.
+- Backend: optional local Node.js adapter under `server/`; no database or persistence.
 - Database: none detected.
 - Package manager: pnpm.
 - Runtime validation: zod.
 - Test runner: Vitest, React Testing Library, Playwright.
 - GitHub Actions: configured for quality, lint, typecheck, format, tests, build, audit, and e2e.
 
-Do not invent a backend, database, auth system, broker integration, live market data provider, or deployment target unless the task explicitly requires it.
+Do not invent a database, auth system, broker integration, live market data provider, or deployment target unless the task explicitly requires it. Do not expose LLM provider keys or paid market data keys in browser code.
 
 ## Product Goal Gate
 
@@ -35,7 +35,8 @@ Do not code when the goal is unclear. Do not design complex architecture for gue
 Current architecture is a documentation-first baseline:
 
 - `AGENTS.md` defines contribution rules.
-- `src/features/market/` contains the market analysis domain model, seed data, analysis logic, and UI components.
+- `src/features/market/` contains the market analysis domain model, seed data, analysis logic, UI components, and browser client for the live LLM adapter.
+- `server/live-llm-server.mjs` is the local server-side adapter that calls `daily_stock_analysis` FastAPI market-review tasks.
 - `src/App.tsx` and `src/main.tsx` mount the React application.
 - `docs/repo-memory.md` is the primary durable repo memory.
 - `docs/module-map.md` is the primary module and boundary map.
@@ -123,7 +124,17 @@ Do not ship only happy-path UI. Do not add user-facing async UI without loading 
 
 ## Backend Rules
 
-No backend exists yet. When one is introduced:
+The only backend boundary is the optional local live LLM adapter. For that adapter:
+
+- Keep it server-side and dependency-light.
+- Validate request bodies, task IDs, report language, and environment-driven URLs.
+- Do not log request bodies, provider keys, or DSA secrets.
+- Keep DSA credentials inside `daily_stock_analysis`.
+- Return typed errors to the frontend without stack traces.
+- Treat DSA as an external service that can be down, slow, or return partial payloads.
+- Cover mapping logic and status compatibility with tests.
+
+When a larger backend is introduced:
 
 - Validate request bodies, params, headers, query strings, and environment variables.
 - Use schema validation at boundaries.
@@ -143,6 +154,7 @@ Current state:
 - `tools/ai-quality.ps1` validates repo baseline structure and scans for obvious secrets.
 - `pnpm test:coverage` runs Vitest and coverage.
 - `pnpm e2e` runs Playwright desktop and mobile smoke tests.
+- `server/live-llm-server.test.mjs` covers the live DSA adapter mapping and status compatibility.
 - `pnpm lint`, `pnpm typecheck`, `pnpm format`, `pnpm build`, and `pnpm audit:deps` are required gates.
 
 Once application code exists, tests must continuously protect:

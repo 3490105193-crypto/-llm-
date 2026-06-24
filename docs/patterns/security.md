@@ -17,6 +17,14 @@ When code is added, audit:
 - Injection risks.
 - Least privilege assumptions.
 
+For the live DSA adapter:
+
+- Browser code may call only `VITE_LIVE_LLM_API_BASE`.
+- The adapter may call only the configured `DSA_BASE_URL`.
+- DSA provider credentials and paid data keys must stay in `daily_stock_analysis`.
+- Validate task IDs, JSON bodies, report language, and CORS origins.
+- Return typed errors without stack traces or raw provider responses.
+
 ## Dependency Audit Commands
 
 Add the appropriate command with the selected stack:

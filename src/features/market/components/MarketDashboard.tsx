@@ -31,7 +31,12 @@ import {
   summarizeLlmBrief,
   summarizeResearchQueue
 } from "../analysis";
-import type { MarketAsset, MarketSnapshot, SavedView } from "../schemas";
+import {
+  getLiveMarketBriefStatus,
+  startLiveMarketBrief,
+  type LiveBriefStatus
+} from "../data/live-llm-client";
+import type { LlmMarketBrief, MarketAsset, MarketSnapshot, SavedView } from "../schemas";
 import { AlertCenter } from "./AlertCenter";
 import { AiBriefing } from "./AiBriefing";
 import { AssetDetail } from "./AssetDetail";
@@ -47,6 +52,13 @@ type MarketDashboardProps = {
 };
 
 type WorkspaceId = "overview" | "ai-brief" | "screener" | "portfolio" | "scenarios" | "alerts";
+type LiveBriefUiState = {
+  mode: "sample" | "submitting" | "running" | "live" | "failed";
+  taskId?: string;
+  progress?: number;
+  error?: string;
+  updatedAt?: string;
+};
 
 const workspaceItems = [
   { id: "overview", label: "Overview", Icon: LayoutDashboard },
@@ -70,6 +82,8 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
   const [activeScenarioId, setActiveScenarioId] = useState(
     snapshot ? choosePrimaryScenario(snapshot.scenarios).id : ""
   );
+  const [liveBrief, setLiveBrief] = useState<LlmMarketBrief | null>(null);
+  const [liveBriefState, setLiveBriefState] = useState<LiveBriefUiState>({ mode: "sample" });
   const [isRefreshing, startRefresh] = useTransition();
 
   const categories = useMemo<Array<MarketAsset["category"] | "All">>(() => {
@@ -126,7 +140,8 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
   const activeScenarioImpact =
     scenarioImpacts.find((impact) => impact.scenario.id === activeScenarioId) ?? scenarioImpacts[0];
   const researchSummary = snapshot ? summarizeResearchQueue(snapshot.researchQueue) : null;
-  const llmSummary = snapshot ? summarizeLlmBrief(snapshot.llmBrief) : null;
+  const activeLlmBrief = liveBrief ?? snapshot?.llmBrief;
+  const llmSummary = activeLlmBrief ? summarizeLlmBrief(activeLlmBrief) : null;
   const assetContext =
     snapshot && selectedAsset
       ? getAssetResearchContext(snapshot, selectedAsset.symbol)
@@ -140,6 +155,53 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
     setRegion("All");
     setSector("All");
     setQuery("");
+  }
+
+  async function runLiveLlmBrief() {
+    setActiveWorkspace("ai-brief");
+    setLiveBriefState({ mode: "submitting", progress: 0 });
+
+    try {
+      const accepted = await startLiveMarketBrief();
+      setLiveBriefState({
+        mode: "running",
+        taskId: accepted.taskId,
+        progress: 0
+      });
+
+      for (let attempt = 0; attempt < 90; attempt += 1) {
+        await delay(3000);
+        const status = await getLiveMarketBriefStatus(accepted.taskId);
+
+        if (status.status === "completed") {
+          setLiveBrief(status.brief);
+          setLiveBriefState({
+            mode: "live",
+            taskId: status.taskId,
+            progress: 100,
+            updatedAt: new Date().toISOString()
+          });
+          return;
+        }
+
+        if (isTerminalLiveStatus(status)) {
+          throw new Error(status.error);
+        }
+
+        setLiveBriefState({
+          mode: "running",
+          taskId: status.taskId,
+          progress: status.progress
+        });
+      }
+
+      throw new Error("daily_stock_analysis task did not complete within 270 seconds");
+    } catch (error) {
+      setLiveBriefState({
+        mode: "failed",
+        error: error instanceof Error ? error.message : "Live LLM market review failed"
+      });
+    }
   }
 
   if (!snapshot) {
@@ -156,6 +218,8 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
       </main>
     );
   }
+
+  const displayedLlmBrief = activeLlmBrief ?? snapshot.llmBrief;
 
   return (
     <main className="min-h-screen bg-paper text-ink">
@@ -290,14 +354,14 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
                     <p className="text-xs font-semibold uppercase text-slate-500">LLM read</p>
                     <h2 className="mt-1 text-xl font-semibold">AI market stance</h2>
                     <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
-                      {snapshot.llmBrief.marketView.summary}
+                      {displayedLlmBrief.marketView.summary}
                     </p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[420px]">
-                    <HeaderPill label="Stance" value={snapshot.llmBrief.marketView.stance} />
+                    <HeaderPill label="Stance" value={displayedLlmBrief.marketView.stance} />
                     <HeaderPill
                       label="Confidence"
-                      value={`${snapshot.llmBrief.marketView.confidence}%`}
+                      value={`${displayedLlmBrief.marketView.confidence}%`}
                     />
                     <HeaderPill
                       label="Top action"
@@ -352,7 +416,13 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
             </>
           ) : null}
 
-          {activeWorkspace === "ai-brief" ? <AiBriefing brief={snapshot.llmBrief} /> : null}
+          {activeWorkspace === "ai-brief" ? (
+            <AiBriefing
+              brief={displayedLlmBrief}
+              liveState={liveBriefState}
+              onRunLive={runLiveLlmBrief}
+            />
+          ) : null}
 
           {activeWorkspace === "screener" ? (
             <>
@@ -492,6 +562,22 @@ export function MarketDashboard({ snapshot }: MarketDashboardProps) {
         </div>
       </div>
     </main>
+  );
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function isTerminalLiveStatus(
+  status: LiveBriefStatus
+): status is Extract<LiveBriefStatus, { status: "failed" | "cancelled" | "cancel_requested" }> {
+  return (
+    status.status === "failed" ||
+    status.status === "cancelled" ||
+    status.status === "cancel_requested"
   );
 }
 

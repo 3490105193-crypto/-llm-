@@ -7,12 +7,12 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.{ts,tsx}", "server/**/*.test.mjs"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}"]
+      include: ["src/**/*.{ts,tsx}", "server/**/*.mjs"],
+      exclude: ["src/**/*.test.{ts,tsx}", "server/**/*.test.mjs"]
     }
   }
 });

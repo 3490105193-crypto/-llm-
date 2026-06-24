@@ -10,8 +10,11 @@
 | `src/styles.css`                              | Tailwind layers and global app shell styling                                                                        | Frontend UI          |
 | `src/features/market/schemas.ts`              | zod schemas for assets, portfolio, scenarios, LLM brief, alerts, research, events, and saved views                  | Market domain        |
 | `src/features/market/data/`                   | Validated multi-asset seed market snapshot and loader                                                               | Market data adapter  |
+| `src/features/market/data/live-llm-client.ts` | Browser-side client for the local live LLM adapter                                                                  | Market data adapter  |
 | `src/features/market/analysis.ts`             | Market health, ranking, portfolio risk, stress, LLM brief summary, alert, research, formatting, and signal logic    | Market domain        |
 | `src/features/market/components/`             | Research workbench, AI brief, screener, asset memo, risk lab, alert center, chart, heatmap, metric, and scenario UI | Market UI            |
+| `server/live-llm-server.mjs`                  | Local server-side adapter that submits and polls `daily_stock_analysis` market-review tasks                         | Live LLM integration |
+| `server/live-llm-server.test.mjs`             | Vitest coverage for DSA status compatibility and brief mapping                                                      | Integration tests    |
 | `src/features/market/*.test.ts`               | Unit tests for market business logic                                                                                | Application tests    |
 | `src/features/market/components/*.test.tsx`   | Component tests for dashboard behavior and error states                                                             | Application tests    |
 | `e2e/market-dashboard.spec.ts`                | Playwright desktop/mobile smoke tests                                                                               | Application tests    |
@@ -35,15 +38,19 @@
 2. `loadMarketSnapshot` validates unknown input with `MarketSnapshotSchema`.
 3. `App` passes the validated snapshot to `MarketDashboard`.
 4. `MarketDashboard` calculates market health, filtered ranking, portfolio risk, scenario impacts, LLM brief summary, selected asset context, and active workspace state.
-5. Presentational components render overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert triage, research queue, event calendar, chart, and heatmap.
+5. If the user runs live LLM from AI Brief, `live-llm-client.ts` submits to `server/live-llm-server.mjs`.
+6. The local adapter calls DSA `POST /api/v1/analysis/market-review`, polls `GET /api/v1/analysis/status/{task_id}`, maps markdown or structured `market_review_payload` into `LlmMarketBrief`, and returns a validated frontend payload.
+7. Presentational components render overview, AI brief, screener, asset memo, portfolio risk lab, scenario matrix, alert triage, research queue, event calendar, chart, and heatmap.
 
 ## Service Boundaries
 
-No backend service boundaries exist yet.
+The only backend service boundary is the optional local live LLM adapter. It exists to keep DSA provider keys and paid market data credentials out of browser code.
 
 Current frontend boundaries:
 
 - Data validation boundary: `loadMarketSnapshot`.
+- Live LLM boundary: `live-llm-client.ts` calls only the local adapter URL from `VITE_LIVE_LLM_API_BASE`.
+- DSA adapter boundary: `server/live-llm-server.mjs` calls `DSA_BASE_URL` and normalizes DSA task status and report shape.
 - Domain calculation boundary: `analysis.ts`.
 - UI composition boundary: `MarketDashboard`.
 - Workbench UI boundaries: `AiBriefing`, `AssetDetail`, `RiskLab`, `AlertCenter`, `AssetTable`, `ScenarioPanel`, `MarketPulseChart`, and `SectorHeatmap`.
@@ -56,4 +63,4 @@ Current frontend boundaries:
 - Auth module if user accounts are introduced.
 - Persistence module if watchlists or saved scenarios become user-specific.
 - Portfolio accounting module if lots, realized P/L, compliance, or tax workflows become product requirements.
-- Server-side LLM adapter if `daily_stock_analysis` or another LLM engine is connected with live keys or paid data.
+- Stronger production LLM adapter if `daily_stock_analysis` moves from local development to hosted multi-user use.

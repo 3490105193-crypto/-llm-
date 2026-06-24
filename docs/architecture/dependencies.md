@@ -12,6 +12,13 @@
 | `lucide-react`        | UI icons                                     |
 | `clsx`                | Conditional class composition                |
 
+## Runtime Integration Dependencies
+
+| Dependency                         | Purpose                                                            |
+| ---------------------------------- | ------------------------------------------------------------------ |
+| Node.js built-in `http`            | Runs the local live LLM adapter without adding server dependencies |
+| `daily_stock_analysis` FastAPI app | External live broad-market LLM engine                              |
+
 ## Tooling Dependencies
 
 | Tool                  | Current Use                                   | Required Now |
@@ -25,6 +32,7 @@
 | Playwright            | Desktop and mobile e2e smoke tests            | Yes          |
 | Prettier              | Formatting gate                               | Yes          |
 | ESLint                | Lint gate                                     | Yes          |
+| Node.js               | Vite runtime and local live adapter           | Yes          |
 
 ## Dependency Rules
 
