@@ -2,6 +2,8 @@
 
 Market Lens is a financial market analysis workspace for scanning market regime, macro signals, asset opportunity, sector breadth, and scenario risk.
 
+LLM 驱动的多市场股票智能分析系统：多源行情、实时新闻、决策看板与自动推送，支持零成本定时运行。
+
 The application is local-data first. It uses a validated seed market snapshot so the product can run without API keys, broker credentials, or paid real-time market data.
 
 Live LLM market review is available through an optional local adapter for `daily_stock_analysis`. The browser calls the local adapter, and the adapter calls the DSA FastAPI service. LLM provider credentials and paid data keys stay in `daily_stock_analysis`, not in the Vite frontend.
