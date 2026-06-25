@@ -6,6 +6,8 @@ The application is local-data first. It uses a validated seed market snapshot so
 
 Live LLM market review is available through an optional local adapter for `daily_stock_analysis`. The browser calls the local adapter, and the adapter calls the DSA FastAPI service. LLM provider credentials and paid data keys stay in `daily_stock_analysis`, not in the Vite frontend.
 
+See `docs/features.md` for a Chinese feature walkthrough.
+
 ## Stack
 
 - React
